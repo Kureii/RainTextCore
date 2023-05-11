@@ -1,0 +1,1 @@
+#include "core/rain_text_core.h"

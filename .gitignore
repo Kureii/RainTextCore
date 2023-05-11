@@ -1,0 +1,33 @@
+# Soubory a adresáře generované během sestavení
+build/
+cmake-build-debug/
+cmake-build-*
+cmake-build-release/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
+CTestTestfile.cmake
+
+# Soubory a adresáře generované prostředím
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Binární soubory a knihovny
+*.a
+*.so
+*.dll
+*.dylib
+*.lib
+*.exe
+*.out
+
+# Soubory sestavení pro CLion
+compile_commands.json
+
+# Soubory generované při použití Conan jako správce balíčků
+conanbuildinfo.*
+conaninfo.txt
+conan.lock

@@ -1,0 +1,2 @@
+add_subdirectory(scrypt)
+add_subdirectory(argon2)

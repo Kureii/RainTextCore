@@ -28,8 +28,8 @@ add_executable(${PROJECT_NAME}
         src/core/rain_text_core.cpp
         include/core/rain_text_core.h
         src/utils/rain_text_core_utils.cpp
-        src/utils/cypher/aes.cpp
-        include/utils/cypher/aes.h
+        src/utils/cipher/aes.cpp
+        include/utils/cipher/aes.h
         )
 
 target_link_libraries(${PROJECT_NAME}

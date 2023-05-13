@@ -1,5 +1,5 @@
 //================================= Includes ===================================
-#include "utils/cypher/aes.h"
+#include "utils/cipher/aes.h"
 #include "utils/rain_text_core_utils.h"
 
 #include <argon2.h>

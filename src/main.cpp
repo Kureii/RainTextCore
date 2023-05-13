@@ -1,92 +1,54 @@
-#include <cryptopp/chacha.h>
-#include <cryptopp/cryptlib.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/rijndael.h>
-#include <cryptopp/sha3.h>
-#include <argon2.h>
-
+#include <iomanip>
 #include <iostream>
 #include <random>
 #include <string>
 #include <vector>
-#include <chrono>
+
+#include "core/rain_text_core.h"
+#include "utils/cipher/aes.h"
+
+void PrintVector(const std::vector<uint8_t>& vec) {
+  std::cout << "{";
+  for (auto & number:vec) {
+    std::cout << "0x" << std::setw(2) << std::setfill('0') << std::hex << (int)number << ", ";
+  }
+  std::cout << "\b\b}"<<std::endl;
+}
 
 int main(int argc, char* argv[]) {
   std::random_device random;
   //---------------------------- prepare key -----------------------------------
-  auto key = std::make_unique<std::vector<uint8_t>>(256);
+  auto key = std::vector<uint8_t>(256);
   for (int i = 0; i < 256; ++i) {
     std::uniform_int_distribution<int> dist(0, 0xFF);
-    (*key)[i] =dist(random);
-  }
-  //---------------------------- separate keys ---------------------------------
-  std::vector<std::vector<uint8_t>> keys;
-  for (int i = 0; i < key->size(); i += 32) {
-    keys.emplace_back(key->begin() + i, key->begin() + i + 32);
-  }
-  key.reset();
-  //---------------------------- print keys ------------------------------------
-/*
-  for(int i = 0; i < keys.size(); ++i) {
-    std::cout << "vector[" << i + 1 << "]\t{";
-    for (int j = 0; j < keys[i].size(); j++) {
-      if (j != keys[i].size() - 1) {
-        std::cout << (int)keys[i][j] << ", ";
-      } else {
-        std::cout << (int)keys[i][j] << "}" << std::endl;
-      }
-    }
-  }
-*/
-  //---------------------------- select key ------------------------------------
-  std::uniform_int_distribution<int> dist(0, keys.size() - 1);
-  auto key_index = dist(random);
-  auto aes_key = keys[key_index];
-  //--------------------- generate Initialization Vector  ----------------------
-  uint8_t init_vector[16];
-  {
-    auto init_vector_index = dist(random);
-    while (key_index == init_vector_index) {
-      init_vector_index = dist(random);
-    }
-    auto pre_init_vector = keys[init_vector_index];
-    auto pre_salt_index = dist(random);
-    while (pre_salt_index == key_index || pre_salt_index == init_vector_index) {
-      pre_salt_index = dist(random);
-    }
-    auto pre_salt = keys[pre_salt_index];
-    CryptoPP::SHA3_256 salt_hash;
-    salt_hash.Update((CryptoPP::byte *)pre_salt.data(), pre_salt.size());
-    std::string salt_text;
-    salt_text.resize(salt_hash.DigestSize());
-    salt_hash.Final((CryptoPP::byte *)&salt_text[0]);
-    auto salt = std::vector<uint8_t>(salt_text.begin(), salt_text.end());
-
-    argon2id_hash_raw(10, 1 << 10, 4, pre_init_vector.data(),
-                      pre_init_vector.size(), salt.data(), salt.size(),
-                      init_vector, 16);
+    key[i] =dist(random);
   }
   //---------------------------- plain data ------------------------------------
   std::string plain_text = "Ahoj svete";
   std::vector<uint8_t> plain_text_uint8(plain_text.begin(), plain_text.end());
 
-  std::vector<uint8_t> cipher_text;
+  //auto rtc = rain_text_core::RainTextCore(*key, plain_text_uint8);
 
-  CryptoPP::AES::Encryption aes_encryption((const CryptoPP::byte *)aes_key.data(), CryptoPP::AES::MAX_KEYLENGTH); // Použijte MAX_KEYLENGTH pro AES-256
-  CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc_encryption(aes_encryption, (const CryptoPP::byte*)init_vector);
+  auto aes = new rain_text_core::Aes(0, key, plain_text_uint8);
 
-  CryptoPP::StreamTransformationFilter stf_encryptor(cbc_encryption, new CryptoPP::VectorSink(cipher_text));
-  stf_encryptor.Put(plain_text_uint8.data(), plain_text_uint8.size());
-  stf_encryptor.MessageEnd();/**/
+  std::vector<uint8_t> crypted_text;
+  aes->Encrypt(crypted_text);
 
-  for (auto & i : cipher_text) {
-    std::cout << std::hex << (int)i;
-  }
+  std::cout << "Crypted text: ";
+  PrintVector(crypted_text);
+  std::vector<uint8_t> plain_text2;
+
+  delete aes;
+  auto aes_d = new rain_text_core::Aes(0, key, crypted_text);
+
+  aes_d->Decrypt(plain_text2);
+  std::cout << "Decrypted text: ";
+  PrintVector(plain_text2);
+  auto plain_text2_str = std::string(plain_text2.begin(), plain_text2.end());
+  std::cout << "Text:" << plain_text2_str << std::endl;
 
   return 0;
 }
+
 
 

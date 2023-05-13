@@ -10,7 +10,7 @@
 
 namespace rain_text_core {
 
-enum CipherType { AES = 0, /*TWOFISH,*/ CHACHA20, NUM_CIPHERS };
+enum CipherType { AES = 0, TWOFISH, CHACHA20, NUM_CIPHERS };
 
 class RainTextCore {
   uint16_t iterations_;

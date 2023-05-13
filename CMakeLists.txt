@@ -30,8 +30,10 @@ add_executable(${PROJECT_NAME}
         src/utils/rain_text_core_utils.cpp
         src/utils/cipher/aes.cpp
         src/utils/cipher/chacha20.cpp
+        src/utils/cipher/twofish.cpp
         include/utils/cipher/aes.h
         include/utils/cipher/chacha20.h
+        include/utils/cipher/twofish.h
         )
 
 target_link_libraries(${PROJECT_NAME}

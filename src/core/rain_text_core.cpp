@@ -8,6 +8,7 @@
 
 #include "utils/cipher/aes.h"
 #include "utils/cipher/chacha20.h"
+#include "utils/cipher/twofish.h"
 #include "utils/rain_text_core_utils.h"
 
 //================================= Namespace ==================================
@@ -71,10 +72,10 @@ std::unique_ptr<rain_text_core::ICipher> RainTextCore::CreateCipher(
   switch (type) {
     case AES:
       return std::make_unique<rain_text_core::Aes>(0, key_, text);
-    /*case TWOFISH:
-      return std::make_unique<rain_text_core::Twofish>(1, key, text);*/
+    case TWOFISH:
+      return std::make_unique<rain_text_core::Twofish>(1, key_, text);
     case CHACHA20:
-      return std::make_unique<rain_text_core::ChaCha20>(1, key_, text);
+      return std::make_unique<rain_text_core::ChaCha20>(2, key_, text);
     default:
       throw std::invalid_argument("Invalid cipher type");
   }

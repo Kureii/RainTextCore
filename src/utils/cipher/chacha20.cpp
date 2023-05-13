@@ -25,7 +25,7 @@ namespace rain_text_core {
 //======================= Aes public implementation ============================
 ChaCha20::ChaCha20(const uint8_t cypher_index, const std::vector<uint8_t> &key,
                    const std::vector<uint8_t> &text)
-    : cypher_index_(cypher_index), key_(key), text_(text) {
+    : ICipher(cypher_index, key, text), cypher_index_(cypher_index), key_(key), text_(text) {
   if (key.size() < 96) {
     auto err = std::string(
         "The key must be a vector greater than or equal to 128.\nYour vector "
@@ -57,13 +57,6 @@ void ChaCha20::Encrypt(std::vector<uint8_t> &output) {
       enc, new CryptoPP::ArraySink(&output[0], output.size()));
   stf.Put(text_.data(), text_.size());
   stf.MessageEnd();
-
-  std::cout << "{";
-  for (auto& number : output) {
-    std::cout << "0x" << std::setw(2) << std::setfill('0') << std::hex
-              << (int)number << ", ";
-  }
-  std::cout << "\b\b}" << std::endl;
 
   output.push_back(*pre_salt_index_);
   output.push_back(*init_vector_index_);

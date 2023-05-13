@@ -24,10 +24,10 @@ namespace rain_text_core {
 //======================= Aes public implementation ============================
 Aes::Aes(const uint8_t cypher_index, const std::vector<uint8_t> &key,
          const std::vector<uint8_t> &text)
-    : cypher_index_(cypher_index), key_(key), text_(text) {
+    : ICipher(cypher_index, key, text), cypher_index_(cypher_index), key_(key), text_(text) {
   if (key.size() < 96) {
     auto err = std::string(
-        "The key must be a vector greater than or equal to 128.\nYour vector "
+        "The key must be a vector greater than or equal to 96.\nYour vector "
         "has only " +
         std::to_string(key.size()) + " elements");
     throw std::invalid_argument(err.data());

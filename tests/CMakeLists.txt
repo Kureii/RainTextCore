@@ -6,9 +6,12 @@ set(TEST_LIBRARY_SOURCE_FILES
         ../src/core/rain_text_core.cpp
         ../src/utils/rain_text_core_utils.cpp
         ../src/utils/cipher/aes.cpp
+        ../src/utils/cipher/chacha20.cpp
         ../include/core/rain_text_core.h
         ../include/utils/rain_text_core_utils.h
+        ../include/utils/i_cipher.h
         ../include/utils/cipher/aes.h
+        ../include/utils/cipher/chacha20.h
         )
 
 

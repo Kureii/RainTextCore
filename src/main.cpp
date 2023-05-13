@@ -7,6 +7,8 @@
 #include "core/rain_text_core.h"
 #include "utils/cipher/chacha20.h"
 
+#define ENABLE_TESTS
+
 void PrintVector(const std::vector<uint8_t>& vec) {
   std::cout << "{";
   for (auto& number : vec) {
@@ -25,27 +27,28 @@ int main(int argc, char* argv[]) {
     key[i] = dist(random);
   }
   //---------------------------- plain data ------------------------------------
-  std::string plain_text = "Hello world";
+  std::string plain_text = "Fuck microsoft";
   std::cout << "Plain text: " << plain_text << std::endl;
   std::vector<uint8_t> plain_text_uint8(plain_text.begin(), plain_text.end());
+  //std::cout << "Plain text: ";  PrintVector(plain_text_uint8);std::cout << std::endl;
 
-  auto cha_cha20 = new rain_text_core::ChaCha20(0, key, plain_text_uint8);
+  auto rtc = new rain_text_core::RainTextCore(12, key, plain_text_uint8);
 
   std::vector<uint8_t> cipher;
-  cha_cha20->Encrypt(cipher);
+  rtc->Encrypt(cipher);
 
-  std::cout << "cipher text: ";
-  PrintVector(cipher);
-  cha_cha20->SetText(cipher);
+  //std::cout << "cipher text: ";
+  //PrintVector(cipher);
+  rtc->SetText(cipher);
   std::vector<uint8_t> decrypted_text;
 
-  cha_cha20->Decrypt(decrypted_text);
-  std::cout << "Decrypted text: ";
-  PrintVector(decrypted_text);
+  rtc->Decrypt(decrypted_text);
+  //std::cout << "Decrypted text: ";
+  //PrintVector(decrypted_text);
   auto plain_text2_str =
       std::string(decrypted_text.begin(), decrypted_text.end());
   std::cout << "Decrypted text: " << plain_text2_str << std::endl;
-  delete cha_cha20;
+  delete rtc;
 
   return 0;
 }

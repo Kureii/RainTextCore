@@ -1,5 +1,8 @@
+#include <memory>
 #include "gtest/gtest.h"
 #include "utils/cipher/aes.h"
+#include "utils/cipher/chacha20.h"
+
 
 static std::vector<uint8_t> key = {
     0x0f, 0x3c, 0x1c, 0x2e, 0x2e, 0xf4, 0x47, 0x2c, 0xcc, 0x94, 0xcc, 0x37,
@@ -44,9 +47,11 @@ static std::vector<uint8_t> invalid_256_key = {
 std::string input = "Hello world";
 static std::vector<uint8_t> input_uint8(input.begin(), input.end());
 static std::vector<uint8_t> output_uint8(input.begin(), input.end());
+
+
 TEST(Cipher_Aes, NormalKey) {
 
-  auto aes = new rain_text_core::Aes(0, key, input_uint8);
+  std::unique_ptr<rain_text_core::Aes> aes = std::make_unique<rain_text_core::Aes>(0, key, input_uint8);
   std::vector<uint8_t> encrypted;
   aes->Encrypt(encrypted);
 
@@ -55,8 +60,6 @@ TEST(Cipher_Aes, NormalKey) {
   aes->SetText(encrypted);
   std::vector<uint8_t> result;
   aes->Decrypt(result);
-
-  delete aes;
 
   ASSERT_EQ(result, output_uint8);
 }
@@ -78,13 +81,54 @@ TEST(Cipher_Aes, BadText) {
 
 TEST(Cipher_Aes, BadTextSet) {
   std::vector<uint8_t> bad_text;
-  auto aes = new rain_text_core::Aes(0, key, input_uint8);
-  ASSERT_THROW(aes->SetText(bad_text),std::invalid_argument);
-  delete aes;
+  auto aes = rain_text_core::Aes(0, key, input_uint8);
+  ASSERT_THROW(aes.SetText(bad_text),std::invalid_argument);
 }
 
 TEST(Cipher_Aes, BadKeySet) {
-  auto aes = new rain_text_core::Aes(0, key, input_uint8);
-  ASSERT_THROW(aes->SetKey(invalid_256_key), std::invalid_argument);
-  delete aes;
+  auto aes = rain_text_core::Aes(0, key, input_uint8);
+  ASSERT_THROW(aes.SetKey(invalid_256_key), std::invalid_argument);
+}
+
+TEST(Cipher_ChaCha20, NormalKey) {
+
+  auto cha_cha_20 = new rain_text_core::ChaCha20(0, key, input_uint8);
+  std::vector<uint8_t> encrypted;
+  cha_cha_20->Encrypt(encrypted);
+
+  ASSERT_TRUE((encrypted != output_uint8));
+
+  cha_cha_20->SetText(encrypted);
+  std::vector<uint8_t> result;
+  cha_cha_20->Decrypt(result);
+
+  delete cha_cha_20;
+
+  ASSERT_EQ(result, output_uint8);
+}
+
+TEST(Cipher_ChaCha20, MinimumKey) {
+  ASSERT_NO_THROW(rain_text_core::ChaCha20(0, minimum_256_key, input_uint8));
+}
+
+TEST(Cipher_ChaCha20, BadKey) {
+  ASSERT_THROW(rain_text_core::ChaCha20(0, invalid_256_key, input_uint8),
+               std::invalid_argument);
+}
+
+TEST(Cipher_ChaCha20, BadText) {
+  std::vector<uint8_t> bad_text;
+  ASSERT_THROW(rain_text_core::ChaCha20(0, key, bad_text),
+               std::invalid_argument);
+}
+
+TEST(Cipher_ChaCha20, BadTextSet) {
+  std::vector<uint8_t> bad_text;
+  auto aes =  rain_text_core::ChaCha20(0, key, input_uint8);
+  ASSERT_THROW(aes.SetText(bad_text),std::invalid_argument);
+}
+
+TEST(Cipher_ChaCha20, BadKeySet) {
+  auto aes =  rain_text_core::ChaCha20(0, key, input_uint8);
+  ASSERT_THROW(aes.SetKey(invalid_256_key), std::invalid_argument);
 }

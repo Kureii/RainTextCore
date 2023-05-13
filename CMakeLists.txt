@@ -27,7 +27,10 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/core/rain_text_core.cpp
         include/core/rain_text_core.h
-        src/utils/rain_text_core_utils.cpp)
+        src/utils/rain_text_core_utils.cpp
+        src/utils/cypher/aes.cpp
+        include/utils/cypher/aes.h
+        )
 
 target_link_libraries(${PROJECT_NAME}
         ${CRYPTO++_LIBRARY}
@@ -36,8 +39,6 @@ target_link_libraries(${PROJECT_NAME}
         )
 
 # Add subdirectories with CMakeLists.txt
-set(SOURCE_SUBDIR "src")
 set(TESTS_SUBDIR "tests")
 
-add_subdirectory(${SOURCE_SUBDIR})
 add_subdirectory(${TESTS_SUBDIR})

@@ -1,6 +1,5 @@
 //================================= Includes ===================================
 #include "utils/cipher/aes.h"
-#include "utils/rain_text_core_utils.h"
 
 #include <argon2.h>
 #include <cryptopp/chacha.h>
@@ -14,6 +13,7 @@
 
 #include <iostream>
 
+#include "utils/rain_text_core_utils.h"
 
 //================================= Namespace ==================================
 namespace rain_text_core {
@@ -28,9 +28,19 @@ namespace rain_text_core {
 Aes::Aes(const uint8_t cypher_index, const std::vector<uint8_t> &key,
          const std::vector<uint8_t> &text)
     : cypher_index_(cypher_index), key_(key), text_(text) {
+  if (key.size() < 96) {
+    auto err = std::string(
+        "The key must be a vector greater than or equal to 128.\nYour vector "
+        "has only " +
+        std::to_string(key.size()) + " elements");
+    throw std::invalid_argument(err.data());
+  }
+  if (text.empty()) {
+    throw std::invalid_argument("The text vector must not be empty");
+  }
   rain_text_core_utils::SplitKey(32, key_, splited_keys_);
-  std::cout << "split_keys_ len:\t" << splited_keys_.size() << std::endl;
 }
+
 void Aes::Encrypt(std::vector<uint8_t> &output) {
   CreateInitVector();
 
@@ -75,11 +85,31 @@ void Aes::Decrypt(std::vector<uint8_t> &output) {
   CryptoPP::StreamTransformationFilter stf_decryptor(
       cbc_decryption, new CryptoPP::VectorSink(output));
 
-
   stf_decryptor.Put(text_.data(), text_.size());
   stf_decryptor.MessageEnd();
 }
 
+const std::vector<uint8_t> &Aes::GetKey() const { return key_; }
+
+void Aes::SetKey(const std::vector<uint8_t> &key) {
+  if (key.size() < 96) {
+    auto err = std::string(
+        "The key must be a vector greater than or equal to 128.\nYour vector "
+        "has only " +
+        std::to_string(key.size()) + " elements");
+    throw std::invalid_argument(err.data());
+  }
+  key_ = key;
+}
+
+const std::vector<uint8_t> &Aes::GetText() const { return text_; }
+
+void Aes::SetText(const std::vector<uint8_t> &text) {
+  if (text.empty()) {
+    throw std::invalid_argument("The text vector must not be empty");
+  }
+  text_ = text;
+}
 //======================= Aes private implementation ===========================
 void Aes::CreateInitVector() {
   std::uniform_int_distribution<int> dist(0, splited_keys_.size() - 1);
@@ -98,7 +128,7 @@ void Aes::CreateInitVector() {
 }
 
 void Aes::ComputeInitVector() {
-  if (!key_index_  || !init_vector_index_ || !pre_salt_index_) {
+  if (!key_index_ || !init_vector_index_ || !pre_salt_index_) {
     throw std::runtime_error(
         "key_index_ or init_vector_index_ or pre_salt_index_ missing");
   }

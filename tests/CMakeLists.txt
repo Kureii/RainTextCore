@@ -5,8 +5,10 @@ set(TEST_LIBRARY_NAME "${PROJECT_NAME}_lib")
 set(TEST_LIBRARY_SOURCE_FILES
         ../src/core/rain_text_core.cpp
         ../src/utils/rain_text_core_utils.cpp
+        ../src/utils/cipher/aes.cpp
         ../include/core/rain_text_core.h
         ../include/utils/rain_text_core_utils.h
+        ../include/utils/cipher/aes.h
         )
 
 
@@ -23,6 +25,7 @@ set(TEST_TARGET_NAME "${PROJECT_NAME}_tests")
 set(TEST_SOURCE_FILES
         tests.cpp
         test_rain_text_core_utils.cpp
+        test_cipher.cpp
         )
 
 # Add a test executable
@@ -55,6 +58,7 @@ add_subdirectory(lib)
 # Attach project source files as a library and SQLite3 library
 target_link_libraries(${TEST_TARGET_NAME}
         ${TEST_LIBRARY_NAME}
+        ${CRYPTO++_LIBRARY}
         gtest_main
         gtest
         scryptlib::scrypt

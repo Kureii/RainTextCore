@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "core/rain_text_core.h"
-#include "utils/cipher/aes.h"
+#include "utils/cipher/chacha20.h"
 
 void PrintVector(const std::vector<uint8_t>& vec) {
   std::cout << "{";
@@ -29,23 +29,23 @@ int main(int argc, char* argv[]) {
   std::cout << "Plain text: " << plain_text << std::endl;
   std::vector<uint8_t> plain_text_uint8(plain_text.begin(), plain_text.end());
 
-  auto aes = new rain_text_core::Aes(0, key, plain_text_uint8);
+  auto cha_cha20 = new rain_text_core::ChaCha20(0, key, plain_text_uint8);
 
   std::vector<uint8_t> cipher;
-  aes->Encrypt(cipher);
+  cha_cha20->Encrypt(cipher);
 
   std::cout << "cipher text: ";
   PrintVector(cipher);
-  aes->SetText(cipher);
+  cha_cha20->SetText(cipher);
   std::vector<uint8_t> decrypted_text;
 
-  aes->Decrypt(decrypted_text);
+  cha_cha20->Decrypt(decrypted_text);
   std::cout << "Decrypted text: ";
   PrintVector(decrypted_text);
   auto plain_text2_str =
       std::string(decrypted_text.begin(), decrypted_text.end());
   std::cout << "Decrypted text: " << plain_text2_str << std::endl;
-  delete aes;
+  delete cha_cha20;
 
   return 0;
 }

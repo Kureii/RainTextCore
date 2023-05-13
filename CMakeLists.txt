@@ -29,7 +29,9 @@ add_executable(${PROJECT_NAME}
         include/core/rain_text_core.h
         src/utils/rain_text_core_utils.cpp
         src/utils/cipher/aes.cpp
+        src/utils/cipher/chacha20.cpp
         include/utils/cipher/aes.h
+        include/utils/cipher/chacha20.h
         )
 
 target_link_libraries(${PROJECT_NAME}

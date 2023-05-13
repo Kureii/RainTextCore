@@ -2,9 +2,6 @@
 #include "utils/cipher/aes.h"
 
 #include <argon2.h>
-#include <cryptopp/chacha.h>
-#include <cryptopp/cryptlib.h>
-#include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
@@ -39,6 +36,11 @@ Aes::Aes(const uint8_t cypher_index, const std::vector<uint8_t> &key,
     throw std::invalid_argument("The text vector must not be empty");
   }
   rain_text_core_utils::SplitKey(32, key_, splited_keys_);
+}
+Aes::~Aes() {
+  delete key_index_;
+  delete init_vector_index_;
+  delete pre_salt_index_;
 }
 
 void Aes::Encrypt(std::vector<uint8_t> &output) {

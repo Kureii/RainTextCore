@@ -21,11 +21,12 @@ class Aes {
  public:
   explicit Aes(uint8_t cypher_index, const std::vector<uint8_t>& key,
                const std::vector<uint8_t>& text);
+  virtual ~Aes();
   void Encrypt(std::vector<uint8_t>& output);
   void Decrypt(std::vector<uint8_t>& output);
-  const std::vector<uint8_t>& GetKey() const;
+  [[nodiscard]] const std::vector<uint8_t>& GetKey() const;
   void SetKey(const std::vector<uint8_t>& key);
-  const std::vector<uint8_t>& GetText() const;
+  [[nodiscard]] const std::vector<uint8_t>& GetText() const;
   void SetText(const std::vector<uint8_t>& text);
 
  private:

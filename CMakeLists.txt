@@ -12,15 +12,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Add header files
 include_directories(include)
 
-add_subdirectory(lib)
+add_subdirectory(lib EXCLUDE_FROM_ALL)
 
 find_path(CRYPTO++_INCLUDE_DIR cryptopp/cryptlib.h)
 find_library(CRYPTO++_LIBRARY NAMES cryptopp libcryptopp)
 find_package(Threads REQUIRED)
 
+include_directories("${CMAKE_SOURCE_DIR}/lib/argon2/include" "${CMAKE_SOURCE_DIR}/lib/scrypt")
+
+
 include_directories(${CRYPTO++_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME}
+        src/main.cpp
+        src/core/rain_text_core.cpp
+        include/core/rain_text_core.h
+        src/utils/rain_text_core_utils.cpp)
 
 target_link_libraries(${PROJECT_NAME}
         ${CRYPTO++_LIBRARY}
@@ -30,7 +37,7 @@ target_link_libraries(${PROJECT_NAME}
 
 # Add subdirectories with CMakeLists.txt
 set(SOURCE_SUBDIR "src")
-#set(TESTS_SUBDIR "tests")
+set(TESTS_SUBDIR "tests")
 
 add_subdirectory(${SOURCE_SUBDIR})
-#add_subdirectory(${TESTS_SUBDIR})
+add_subdirectory(${TESTS_SUBDIR})

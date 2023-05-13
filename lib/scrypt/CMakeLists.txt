@@ -20,5 +20,4 @@ target_link_libraries(scrypt PRIVATE m)
 
 target_include_directories(scrypt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Oprava: Přidání aliasu pro cíl "sha3"
 add_library(scryptlib::scrypt ALIAS scrypt)

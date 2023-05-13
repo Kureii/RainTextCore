@@ -20,7 +20,7 @@ set(SOURCE_FILES
         src/opt.c
         )
 
-add_library(argon2 ${SOURCE_FILES})
+add_library(argon2 STATIC ${SOURCE_FILES})
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)

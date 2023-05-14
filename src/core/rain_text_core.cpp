@@ -22,7 +22,11 @@ namespace rain_text_core {
 //================== RainTextCore public implementation ========================
 RainTextCore::RainTextCore(uint16_t iterations, const std::vector<uint8_t>& key,
                            const std::vector<uint8_t>& text)
-    : key_(key), text_(text), iterations_(iterations) {
+    : iterations_(iterations), key_(key), text_(text) {
+  if (iterations == 0) {
+    throw std::invalid_argument(
+        "You must enter at least one iteration, we recommend at least 10");
+  }
   if (key.size() < 96) {
     auto err = std::string(
         "The key must be a vector greater than or equal to 128.\nYour vector "
@@ -51,7 +55,7 @@ void RainTextCore::Encrypt(std::vector<uint8_t>& output) {
 }
 void RainTextCore::Decrypt(std::vector<uint8_t>& output) {
   std::vector<uint8_t> tmp;
-  while(text_.back() != 0xFF) {
+  while (text_.back() != 0xFF) {
     tmp = std::vector<uint8_t>();
     auto cipher_index = static_cast<CipherType>(text_.back());
     std::unique_ptr<rain_text_core::ICipher> selected_cipher =
@@ -64,7 +68,6 @@ void RainTextCore::Decrypt(std::vector<uint8_t>& output) {
   text_ = tmp;
   output = text_;
 }
-
 
 //================== RainTextCore private implementation =======================
 std::unique_ptr<rain_text_core::ICipher> RainTextCore::CreateCipher(
@@ -80,8 +83,8 @@ std::unique_ptr<rain_text_core::ICipher> RainTextCore::CreateCipher(
       throw std::invalid_argument("Invalid cipher type");
   }
 }
-  const std::vector<uint8_t>& RainTextCore::GetText() const { return text_; }
-  void RainTextCore::SetText(const std::vector<uint8_t>& text) { text_ = text; }
+const std::vector<uint8_t>& RainTextCore::GetText() const { return text_; }
+void RainTextCore::SetText(const std::vector<uint8_t>& text) { text_ = text; }
 //============== database_utils tests functions implementation =================
 #ifdef ENABLE_TESTS
 #endif

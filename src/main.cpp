@@ -7,7 +7,6 @@
 #include "core/rain_text_core.h"
 #include "utils/cipher/chacha20.h"
 
-#define ENABLE_TESTS
 
 void PrintVector(const std::vector<uint8_t>& vec) {
   std::cout << "{";

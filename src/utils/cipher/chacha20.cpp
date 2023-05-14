@@ -37,6 +37,9 @@ ChaCha20::ChaCha20(const uint8_t cypher_index, const std::vector<uint8_t> &key,
     throw std::invalid_argument("The text vector must not be empty");
   }
   rain_text_core_utils::SplitKey(32, key_, splited_keys_);
+  key_index_ = nullptr;
+  init_vector_index_ = nullptr;
+  pre_salt_index_ = nullptr;
 }
 
 ChaCha20::~ChaCha20() {

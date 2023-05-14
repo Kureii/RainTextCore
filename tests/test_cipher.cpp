@@ -2,6 +2,10 @@
 #include "gtest/gtest.h"
 #include "utils/cipher/aes.h"
 #include "utils/cipher/chacha20.h"
+#include "utils/cipher/twofish.h"
+#include "utils/i_cipher.h"
+#include "core/rain_text_core.h"
+
 
 
 static std::vector<uint8_t> key = {
@@ -51,7 +55,7 @@ static std::vector<uint8_t> output_uint8(input.begin(), input.end());
 
 TEST(Cipher_Aes, NormalKey) {
 
-  std::unique_ptr<rain_text_core::Aes> aes = std::make_unique<rain_text_core::Aes>(0, key, input_uint8);
+  auto aes = std::make_unique<rain_text_core::Aes>(0, key, input_uint8);
   std::vector<uint8_t> encrypted;
   aes->Encrypt(encrypted);
 
@@ -92,7 +96,7 @@ TEST(Cipher_Aes, BadKeySet) {
 
 TEST(Cipher_ChaCha20, NormalKey) {
 
-  auto cha_cha_20 = new rain_text_core::ChaCha20(0, key, input_uint8);
+  auto cha_cha_20 = std::make_unique<rain_text_core::ChaCha20>(1, key, input_uint8);
   std::vector<uint8_t> encrypted;
   cha_cha_20->Encrypt(encrypted);
 
@@ -102,33 +106,113 @@ TEST(Cipher_ChaCha20, NormalKey) {
   std::vector<uint8_t> result;
   cha_cha_20->Decrypt(result);
 
-  delete cha_cha_20;
-
   ASSERT_EQ(result, output_uint8);
 }
 
 TEST(Cipher_ChaCha20, MinimumKey) {
-  ASSERT_NO_THROW(rain_text_core::ChaCha20(0, minimum_256_key, input_uint8));
+  ASSERT_NO_THROW(rain_text_core::ChaCha20(1, minimum_256_key, input_uint8));
 }
 
 TEST(Cipher_ChaCha20, BadKey) {
-  ASSERT_THROW(rain_text_core::ChaCha20(0, invalid_256_key, input_uint8),
+  ASSERT_THROW(rain_text_core::ChaCha20(1, invalid_256_key, input_uint8),
                std::invalid_argument);
 }
 
 TEST(Cipher_ChaCha20, BadText) {
   std::vector<uint8_t> bad_text;
-  ASSERT_THROW(rain_text_core::ChaCha20(0, key, bad_text),
+  ASSERT_THROW(rain_text_core::ChaCha20(1, key, bad_text),
                std::invalid_argument);
 }
 
 TEST(Cipher_ChaCha20, BadTextSet) {
   std::vector<uint8_t> bad_text;
-  auto aes =  rain_text_core::ChaCha20(0, key, input_uint8);
+  auto aes =  rain_text_core::ChaCha20(1, key, input_uint8);
   ASSERT_THROW(aes.SetText(bad_text),std::invalid_argument);
 }
 
 TEST(Cipher_ChaCha20, BadKeySet) {
-  auto aes =  rain_text_core::ChaCha20(0, key, input_uint8);
+  auto aes =  rain_text_core::ChaCha20(1, key, input_uint8);
   ASSERT_THROW(aes.SetKey(invalid_256_key), std::invalid_argument);
+}
+
+TEST(Cipher_Twofish, NormalKey) {
+  auto twofish = std::make_unique<rain_text_core::Twofish>(2, key, input_uint8);
+  std::vector<uint8_t> encrypted;
+  twofish->Encrypt(encrypted);
+
+  ASSERT_TRUE((encrypted != output_uint8));
+
+  twofish->SetText(encrypted);
+  std::vector<uint8_t> result;
+  twofish->Decrypt(result);
+
+  ASSERT_EQ(result, output_uint8);
+}
+
+TEST(Cipher_Twofish, MinimumKey) {
+  ASSERT_NO_THROW(rain_text_core::Twofish(2, minimum_256_key, input_uint8));
+}
+
+TEST(Cipher_Twofish, BadKey) {
+  ASSERT_THROW(rain_text_core::Twofish(2, invalid_256_key, input_uint8),
+               std::invalid_argument);
+}
+
+TEST(Cipher_Twofish, BadText) {
+  std::vector<uint8_t> bad_text;
+  ASSERT_THROW(rain_text_core::Twofish(2, key, bad_text),
+               std::invalid_argument);
+}
+
+TEST(Cipher_Twofish, BadTextSet) {
+  std::vector<uint8_t> bad_text;
+  auto aes =  rain_text_core::Twofish(2, key, input_uint8);
+  ASSERT_THROW(aes.SetText(bad_text),std::invalid_argument);
+}
+
+TEST(Cipher_Twofish, BadKeySet) {
+  auto aes =  rain_text_core::Twofish(2, key, input_uint8);
+  ASSERT_THROW(aes.SetKey(invalid_256_key), std::invalid_argument);
+}
+
+TEST(Cipher_RainTextCore, OneIteration) {
+  auto rtc = std::make_unique<rain_text_core::RainTextCore>(1, key, input_uint8);
+
+  std::vector<uint8_t> cipher;
+  rtc->Encrypt(cipher);
+
+  rtc->SetText(cipher);
+  std::vector<uint8_t> result;
+
+  rtc->Decrypt(result);
+
+  ASSERT_EQ(result, output_uint8);
+}
+
+TEST(Cipher_RainTextCore, TenIteration) {
+  auto rtc = std::make_unique<rain_text_core::RainTextCore>(10, key, input_uint8);
+
+  std::vector<uint8_t> cipher;
+  rtc->Encrypt(cipher);
+
+  rtc->SetText(cipher);
+  std::vector<uint8_t> result;
+
+  rtc->Decrypt(result);
+
+  ASSERT_EQ(result, output_uint8);
+}
+
+TEST(Cipher_RainTextCore, HundretIteration) {
+  auto rtc = std::make_unique<rain_text_core::RainTextCore>(100, key, input_uint8);
+
+  std::vector<uint8_t> cipher;
+  rtc->Encrypt(cipher);
+
+  rtc->SetText(cipher);
+  std::vector<uint8_t> result;
+
+  rtc->Decrypt(result);
+
+  ASSERT_EQ(result, output_uint8);
 }

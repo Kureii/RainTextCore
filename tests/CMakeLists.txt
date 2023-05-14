@@ -3,15 +3,16 @@ set(TEST_LIBRARY_NAME "${PROJECT_NAME}_lib")
 
 # Zdrojové soubory pro testovací knihovnu
 set(TEST_LIBRARY_SOURCE_FILES
+        ../src/main.cpp
         ../src/core/rain_text_core.cpp
+        ../include/core/rain_text_core.h
         ../src/utils/rain_text_core_utils.cpp
         ../src/utils/cipher/aes.cpp
         ../src/utils/cipher/chacha20.cpp
-        ../include/core/rain_text_core.h
-        ../include/utils/rain_text_core_utils.h
-        ../include/utils/i_cipher.h
+        ../src/utils/cipher/twofish.cpp
         ../include/utils/cipher/aes.h
         ../include/utils/cipher/chacha20.h
+        ../include/utils/cipher/twofish.h
         )
 
 

@@ -20,11 +20,9 @@ find_package(Threads REQUIRED)
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/argon2/include" "${CMAKE_SOURCE_DIR}/lib/scrypt")
 
-
 include_directories(${CRYPTO++_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME}
-        src/main.cpp
+add_library(${PROJECT_NAME} STATIC
         src/core/rain_text_core.cpp
         include/core/rain_text_core.h
         src/utils/rain_text_core_utils.cpp

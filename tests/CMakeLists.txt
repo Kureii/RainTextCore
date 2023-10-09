@@ -1,27 +1,3 @@
-# Název knihovny pro testování
-set(TEST_LIBRARY_NAME "${PROJECT_NAME}_lib")
-
-# Zdrojové soubory pro testovací knihovnu
-set(TEST_LIBRARY_SOURCE_FILES
-        ../src/main.cpp
-        ../src/core/rain_text_core.cpp
-        ../include/core/rain_text_core.h
-        ../src/utils/rain_text_core_utils.cpp
-        ../src/utils/cipher/aes.cpp
-        ../src/utils/cipher/chacha20.cpp
-        ../src/utils/cipher/twofish.cpp
-        ../include/utils/cipher/aes.h
-        ../include/utils/cipher/chacha20.h
-        ../include/utils/cipher/twofish.h
-        )
-
-
-# Vytvořte testovací knihovnu
-add_library(${TEST_LIBRARY_NAME} ${TEST_LIBRARY_SOURCE_FILES})
-
-# Explicitly set the linker language for the test library target
-set_target_properties(${TEST_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-
 # Name of the test target
 set(TEST_TARGET_NAME "${PROJECT_NAME}_tests")
 
@@ -30,7 +6,7 @@ set(TEST_SOURCE_FILES
         tests.cpp
         test_rain_text_core_utils.cpp
         test_cipher.cpp
-        )
+)
 
 # Add a test executable
 add_executable(${TEST_TARGET_NAME} ${TEST_SOURCE_FILES})
@@ -38,40 +14,30 @@ add_executable(${TEST_TARGET_NAME} ${TEST_SOURCE_FILES})
 # Set the output directory for the test executable
 set_target_properties(${TEST_TARGET_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/tests"
-        )
+)
 
-add_dependencies(${TEST_LIBRARY_NAME} scrypt argon2)
+# Add dependencies if needed
+add_dependencies(${TEST_TARGET_NAME} scrypt Argon2)
 
-
+# Include directories
 target_include_directories(${TEST_TARGET_NAME} PRIVATE "${INCLUDE_DIR}" ${SQLite3_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/lib/argon2/include" "${CMAKE_SOURCE_DIR}/lib/scrypt")
 
+# Find and include GTest
+find_package(GTest REQUIRED)
 
-
-# Attach project header files
-target_include_directories(${TEST_TARGET_NAME} PRIVATE
-        "${INCLUDE_DIR}"
-        "${CMAKE_SOURCE_DIR}/lib/scrypt"
-        "${CMAKE_SOURCE_DIR}/lib/argon2/include"
-        )
-
-
-# Connect Google Test Libraries
-add_subdirectory(lib)
-
-
-# Attach project source files as a library and SQLite3 library
+# Link the test target with main library and other dependencies
 target_link_libraries(${TEST_TARGET_NAME}
-        ${TEST_LIBRARY_NAME}
-        ${CRYPTO++_LIBRARY}
+        RainTextCore
+        cryptopp
         gtest_main
         gtest
         scryptlib::scrypt
         argon2lib::argon2
-        )
+)
 
-# Add target_compile_definitions for ENABLE_TESTS to both the test target and the test library
+# Add target_compile_definitions for ENABLE_TESTS
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE ENABLE_TESTS)
-target_compile_definitions(${TEST_LIBRARY_NAME} PRIVATE ENABLE_TESTS)
 
+# Enable testing and add test
 enable_testing()
 add_test(NAME ${TEST_TARGET_NAME} COMMAND ${TEST_TARGET_NAME})

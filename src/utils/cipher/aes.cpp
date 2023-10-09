@@ -1,7 +1,7 @@
 //================================= Includes ===================================
 #include "utils/cipher/aes.h"
 
-#include <argon2.h>
+#include <Argon2.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
@@ -147,9 +147,9 @@ void Aes::ComputeInitVector() {
 
   auto salt = std::vector<uint8_t>(salt_text.begin(), salt_text.end());
 
-  argon2id_hash_raw(10, 1 << 10, 4, pre_init_vector.data(),
-                    pre_init_vector.size(), salt.data(), salt.size(),
-                    init_vector_, 16);
+  std::vector<unsigned char> temp = Argon2::Argon2id(pre_init_vector, salt, 10, 1<<10, 4, 16);
+  std::copy(temp.begin(), temp.end(), init_vector_);
+
 }
 
 //=================== Aes tests functions implementation =======================

@@ -1,46 +1,87 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Project name
-set(PROJECT_NAME "RainTextCore")
-project(${PROJECT_NAME} LANGUAGES CXX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+        message("Build for Android")
+        set(CMAKE_SYSTEM_VERSION 24) # API level
+        set(CMAKE_ANDROID_STL_TYPE c++_static)
+        set(CRYPTOPP_LIB_PATH ${CMAKE_SOURCE_DIR}/lib/cryptopp/output/android/${ANDROID_ABI}/libcryptopp.so)
+        set(CMAKE_SYSTEM_PROCESSOR ${ANDROID_ABI})
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        message("Build for Windows")
+        set(CMAKE_C_COMPILER /usr/bin/x86_64-w64-mingw32-gcc)
+        set(CMAKE_CXX_COMPILER /usr/bin/x86_64-w64-mingw32-g++)
+        set(CRYPTOPP_LIB_PATH ${CMAKE_SOURCE_DIR}/lib/cryptopp/output/windows/libcryptopp.a)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        message("Build for Linux")
+        set(CRYPTOPP_LIB_PATH ${CMAKE_SOURCE_DIR}/lib/cryptopp/output/linux/libcryptopp.a)
+        set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+endif()
+
 
 # Set C++23 standard
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Add header files
-include_directories(include)
+# Project name
+project(
+        "RainTextCore"
+        VERSION 0.5.0
+        LANGUAGES CXX
+)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+        if(ANDROID_ABI STREQUAL "armeabi-v7a")
+                set(CMAKE_SYSTEM_PROCESSOR "armeabi-v7a")
+        elseif(ANDROID_ABI STREQUAL "arm64-v8a")
+                set(CMAKE_SYSTEM_PROCESSOR "arm64-v8a")
+        elseif(ANDROID_ABI STREQUAL "x86")
+                set(CMAKE_SYSTEM_PROCESSOR "x86")
+        elseif(ANDROID_ABI STREQUAL "x86_64")
+                set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+        endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+                set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+                set(CMAKE_SYSTEM_PROCESSOR "aarch64")
+        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+                set(CMAKE_SYSTEM_PROCESSOR "arm")
+        endif()
+endif()
+message("CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+
+
+include(include/include.cmake)
+include(src/src.cmake)
 
 add_subdirectory(lib EXCLUDE_FROM_ALL)
 
-find_path(CRYPTO++_INCLUDE_DIR cryptopp/cryptlib.h)
-find_library(CRYPTO++_LIBRARY NAMES cryptopp libcryptopp)
-find_package(Threads REQUIRED)
 
-include_directories("${CMAKE_SOURCE_DIR}/lib/argon2/include" "${CMAKE_SOURCE_DIR}/lib/scrypt")
-
-include_directories(${CRYPTO++_INCLUDE_DIR})
 
 add_library(${PROJECT_NAME} STATIC
-        src/core/rain_text_core.cpp
-        include/core/rain_text_core.h
-        src/utils/rain_text_core_utils.cpp
-        src/utils/cipher/aes.cpp
-        src/utils/cipher/chacha20.cpp
-        src/utils/cipher/twofish.cpp
-        include/utils/cipher/aes.h
-        include/utils/cipher/chacha20.h
-        include/utils/cipher/twofish.h
+        ${rain-text-core-headers}
+        ${rain-text-core-sources}
         )
+# Linkování knihovny
+add_library(cryptopp STATIC IMPORTED)
+set_target_properties(cryptopp PROPERTIES
+        IMPORTED_LOCATION ${CRYPTOPP_LIB_PATH}
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/lib/cryptopp/
+)
+
+include_directories(./include)
 
 target_link_libraries(${PROJECT_NAME}
-        ${CRYPTO++_LIBRARY}
+        cryptopp
         scryptlib::scrypt
         argon2lib::argon2
         )
 
-# Add subdirectories with CMakeLists.txt
-set(TESTS_SUBDIR "tests")
-
-add_subdirectory(${TESTS_SUBDIR})
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_subdirectory(tests)
+else ()
+        message("tests are not available")
+endif ()

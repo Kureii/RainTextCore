@@ -1,5 +1,10 @@
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
+add_compile_definitions(NDEBUG)
+set(CMAKE_CXX_FLAGS "-g2 -O3 -fPIC -pipe")
+set(CMAKE_C_FLAGS "-g2 -O3 -fPIC -pipe")
+add_compile_options(-g2 -O3 -fPIC -pipe)
+
 # Add the Argon2 directory to add that library
 add_subdirectory(Argon2)
 

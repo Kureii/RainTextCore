@@ -48,8 +48,18 @@ ChaCha20::~ChaCha20() {
   delete pre_salt_index_;
 }
 
-void ChaCha20::Encrypt(std::vector<uint8_t> &output) {
-  CreateInitVector();
+void ChaCha20::Encrypt(std::vector<uint8_t> &output) {if (key_index_ != nullptr ||
+      init_vector_index_ != nullptr ||
+      pre_salt_index_ != nullptr) {
+    delete key_index_;
+    delete init_vector_index_;
+    delete pre_salt_index_;
+  }
+  key_index_ = new uint8_t();
+  init_vector_index_ = new uint8_t();
+  pre_salt_index_ = new uint8_t();
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_, pre_salt_index_, init_vector_, 8);
+  //CreateInitVector();
   output = std::vector<uint8_t>(text_.size());
   CryptoPP::ChaCha::Encryption enc;
   enc.SetKeyWithIV((const CryptoPP::byte *)splited_keys_[*key_index_].data(),
@@ -71,6 +81,9 @@ void ChaCha20::Decrypt(std::vector<uint8_t> &output) {
   if (text_.back() != (uint8_t)cypher_index_) {
     throw std::length_error("Compatibility problem");
   }
+  delete key_index_;
+  delete init_vector_index_;
+  delete pre_salt_index_;
   pre_salt_index_ = new uint8_t(text_[(text_.size() - 4)]);
   init_vector_index_ = new uint8_t(text_[(text_.size() - 3)]);
   key_index_ = new uint8_t(text_[(text_.size() - 2)]);
@@ -78,8 +91,8 @@ void ChaCha20::Decrypt(std::vector<uint8_t> &output) {
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
-
-  ComputeInitVector();
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_, pre_salt_index_, init_vector_, 8, true);
+  //ComputeInitVector();
   output = std::vector<uint8_t>(text_.size());
 
   CryptoPP::ChaCha::Decryption dec;

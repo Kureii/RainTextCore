@@ -47,7 +47,17 @@ Aes::~Aes() {
 }
 
 void Aes::Encrypt(std::vector<uint8_t> &output) {
-  CreateInitVector();
+  if (key_index_ != nullptr ||
+      init_vector_index_ != nullptr ||
+      pre_salt_index_ != nullptr) {
+    delete key_index_;
+    delete init_vector_index_;
+    delete pre_salt_index_;
+  }
+  key_index_ = new uint8_t();
+  init_vector_index_ = new uint8_t();
+  pre_salt_index_ = new uint8_t();
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_, pre_salt_index_, init_vector_, 16);
 
   CryptoPP::AES::Encryption aes_encryption(
       (const CryptoPP::byte *)splited_keys_[*key_index_].data(),
@@ -70,6 +80,9 @@ void Aes::Decrypt(std::vector<uint8_t> &output) {
   if (text_.back() != (uint8_t)cypher_index_) {
     throw std::length_error("Compatibility problem");
   }
+  delete key_index_;
+  delete init_vector_index_;
+  delete pre_salt_index_;
   pre_salt_index_ = new uint8_t(text_[(text_.size() - 4)]);
   init_vector_index_ = new uint8_t(text_[(text_.size() - 3)]);
   key_index_ = new uint8_t(text_[(text_.size() - 2)]);
@@ -77,8 +90,7 @@ void Aes::Decrypt(std::vector<uint8_t> &output) {
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
-
-  ComputeInitVector();
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_, pre_salt_index_, init_vector_, 16, true);
 
   CryptoPP::AES::Decryption aes_decryption(
       (const CryptoPP::byte *)splited_keys_[*key_index_].data(),

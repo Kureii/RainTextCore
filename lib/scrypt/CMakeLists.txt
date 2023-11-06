@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(libscrypt LANGUAGES C)
 
+add_compile_definitions(NDEBUG)
+set(CMAKE_CXX_FLAGS "-g2 -O3 -fPIC -pipe")
+set(CMAKE_C_FLAGS "-g2 -O3 -fPIC -pipe")
+add_compile_options(-g2 -O3 -fPIC -pipe)
+
 set(SOURCES
         crypto_scrypt-nosse.c
         sha256.c
@@ -14,7 +19,6 @@ set(SOURCES
 
 add_library(scrypt STATIC ${SOURCES})
 
-target_compile_options(scrypt PRIVATE -D_FORTIFY_SOURCE=2 -fPIC -O2 -Wall -g -fstack-protector)
 target_link_libraries(scrypt PRIVATE m)
 
 

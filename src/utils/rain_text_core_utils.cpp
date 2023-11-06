@@ -1,10 +1,13 @@
 //================================= Includes ===================================
 #include "utils/rain_text_core_utils.h"
+#include <random>
+#include <cryptopp/sha3.h>
+#include <Argon2.h>
 
 //================================= Namespace ==================================
 namespace rain_text_core::rain_text_core_utils {
 //======================== Define helpful variables ============================
-
+std::random_device random;
 //======================= Define helpful structures ============================
 
 //======================= Define helpful functions =============================
@@ -20,6 +23,41 @@ void SplitKey(uint16_t byte_size,
       output.emplace_back(key.begin() + i, key.begin() + i + byte_size);
     }
   }
+}
+
+void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t *key_index, uint8_t *init_vector_index, uint8_t *pre_salt_index,uint8_t* iv, uint8_t iv_size, bool decrypt) {
+  if (!decrypt) {
+    std::uniform_int_distribution<int> dist(0, splited_keys.size() - 1);
+    *key_index = uint8_t(dist(random));
+    *init_vector_index = uint8_t(dist(random));
+    while (key_index == init_vector_index) {
+      *init_vector_index = dist(random);
+    }
+    *pre_salt_index = uint8_t(dist(random));
+    while (*pre_salt_index == *key_index ||
+           *pre_salt_index == *init_vector_index) {
+      *pre_salt_index = dist(random);
+    }
+
+  }
+
+  if (!key_index || !init_vector_index || !pre_salt_index) {
+    throw std::runtime_error(
+        "key_index_ or init_vector_index_ or pre_salt_index_ missing");
+  }
+  auto pre_init_vector = (splited_keys)[*init_vector_index];
+  auto pre_salt = (splited_keys)[*pre_salt_index];
+
+  CryptoPP::SHA3_256 salt_hash;
+  salt_hash.Update((CryptoPP::byte *)pre_salt.data(), pre_salt.size());
+  std::string salt_text;
+  salt_text.resize(salt_hash.DigestSize());
+  salt_hash.Final((CryptoPP::byte *)&salt_text[0]);
+
+  auto salt = std::vector<uint8_t>(salt_text.begin(), salt_text.end());
+
+  std::vector<unsigned char> temp = Argon2::Argon2id(pre_init_vector, salt, 10, 1<<10, 4, iv_size);
+  std::copy(temp.begin(), temp.end(), iv);
 }
 
 //============ rain_text_core_utils tests functions implementation =============

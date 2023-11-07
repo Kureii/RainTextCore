@@ -11,10 +11,9 @@ namespace rain_text_core {
 
 class Twofish : public ICipher{
   const uint8_t cypher_index_;
-  uint8_t* key_index_;
-  uint8_t* init_vector_index_;
-  uint8_t* pre_salt_index_;
-  uint8_t init_vector_[8];
+  uint8_t key_index_;
+  uint8_t init_vector_index_;
+  uint8_t pre_salt_index_;
   std::random_device random_;
   std::vector<uint8_t> key_;
   std::vector<uint8_t> text_;
@@ -29,11 +28,6 @@ class Twofish : public ICipher{
   void SetKey(const std::vector<uint8_t>& key) override;
   [[nodiscard]] const std::vector<uint8_t>& GetText() const override;
   void SetText(const std::vector<uint8_t>& text) override;
-  ~Twofish() override;
-
- private:
-  void CreateInitVector();
-  void ComputeInitVector();
 };
 
 }

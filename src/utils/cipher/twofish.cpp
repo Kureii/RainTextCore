@@ -43,29 +43,28 @@ Twofish::Twofish(const uint8_t cypher_index, const std::vector<uint8_t> &key,
   init_vector_index_ = nullptr;
   pre_salt_index_ = nullptr;
 }
-Twofish::~Twofish() {
-  delete key_index_;
-  delete init_vector_index_;
-  delete pre_salt_index_;
-}
 
 void Twofish::Encrypt(std::vector<uint8_t> &output) {
-  CreateInitVector();
+  key_index_ = 0;
+  init_vector_index_ = 0;
+  pre_salt_index_ = 0;
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
+                              pre_salt_index_, init_vector_, 8);
 
   CryptoPP::Twofish::Encryption enc;
-  enc.SetKey((const CryptoPP::byte *)splited_keys_[*key_index_].data(),
-             splited_keys_[*key_index_].size());
+  enc.SetKey((const CryptoPP::byte *)splited_keys_[key_index_].data(),
+             splited_keys_[key_index_].size());
 
   CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc(
       enc, (const CryptoPP::byte *)init_vector_);
-  CryptoPP::StreamTransformationFilter stf(
-      cbc, new CryptoPP::VectorSink(output));
+  CryptoPP::StreamTransformationFilter stf(cbc,
+                                           new CryptoPP::VectorSink(output));
   stf.Put(text_.data(), text_.size());
   stf.MessageEnd();
 
-  output.push_back(*pre_salt_index_);
-  output.push_back(*init_vector_index_);
-  output.push_back(*key_index_);
+  output.push_back(pre_salt_index_);
+  output.push_back(init_vector_index_);
+  output.push_back(key_index_);
   output.push_back(cypher_index_);
 }
 
@@ -73,21 +72,24 @@ void Twofish::Decrypt(std::vector<uint8_t> &output) {
   if (text_.back() != (uint8_t)cypher_index_) {
     throw std::length_error("Compatibility problem");
   }
-  pre_salt_index_ = new uint8_t(text_[(text_.size() - 4)]);
-  init_vector_index_ = new uint8_t(text_[(text_.size() - 3)]);
-  key_index_ = new uint8_t(text_[(text_.size() - 2)]);
+  pre_salt_index_ = text_[(text_.size() - 4)];
+  init_vector_index_ = text_[(text_.size() - 3)];
+  key_index_ = text_[(text_.size() - 2)];
 
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
-
-  ComputeInitVector();
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
+                              pre_salt_index_, init_vector_, 8, true);
 
   CryptoPP::Twofish::Decryption dec;
-  dec.SetKey((const CryptoPP::byte *)splited_keys_[*key_index_].data(), splited_keys_[*key_index_].size());
+  dec.SetKey((const CryptoPP::byte *)splited_keys_[key_index_].data(),
+             splited_keys_[key_index_].size());
 
-  CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc(dec, (const CryptoPP::byte *)init_vector_);
-  CryptoPP::StreamTransformationFilter stf(cbc, new CryptoPP::VectorSink(output));
+  CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc(
+      dec, (const CryptoPP::byte *)init_vector_);
+  CryptoPP::StreamTransformationFilter stf(cbc,
+                                           new CryptoPP::VectorSink(output));
   stf.Put(text_.data(), text_.size());
   stf.MessageEnd();
 }
@@ -114,40 +116,6 @@ void Twofish::SetText(const std::vector<uint8_t> &text) {
   text_ = text;
 }
 //======================= Aes private implementation ===========================
-void Twofish::CreateInitVector() {
-  std::uniform_int_distribution<int> dist(0, splited_keys_.size() - 1);
-  key_index_ = new uint8_t(dist(random_));
-  init_vector_index_ = new uint8_t(dist(random_));
-  while (key_index_ == init_vector_index_) {
-    *init_vector_index_ = dist(random_);
-  }
-  pre_salt_index_ = new uint8_t(dist(random_));
-  while (pre_salt_index_ == key_index_ ||
-         pre_salt_index_ == init_vector_index_) {
-    *pre_salt_index_ = dist(random_);
-  }
-
-  ComputeInitVector();
-}
-
-void Twofish::ComputeInitVector() {
-  if (!key_index_ || !init_vector_index_ || !pre_salt_index_) {
-    throw std::runtime_error(
-        "key_index_ or init_vector_index_ or pre_salt_index_ missing");
-  }
-  auto pre_init_vector = splited_keys_[*init_vector_index_];
-  auto pre_salt = splited_keys_[*pre_salt_index_];
-  CryptoPP::SHA3_256 salt_hash;
-  salt_hash.Update((CryptoPP::byte *)pre_salt.data(), pre_salt.size());
-  std::string salt_text;
-  salt_text.resize(salt_hash.DigestSize());
-  salt_hash.Final((CryptoPP::byte *)&salt_text[0]);
-
-  auto salt = std::vector<uint8_t>(salt_text.begin(), salt_text.end());
-
-  std::vector<unsigned char> temp = Argon2::Argon2id(pre_init_vector, salt, 10, 1<<10, 4, 16);
-  std::copy(temp.begin(), temp.end(), init_vector_);
-}
 
 //=================== Aes tests functions implementation =======================
 #ifdef ENABLE_TESTS

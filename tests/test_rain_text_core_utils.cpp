@@ -23,15 +23,15 @@ static std::vector<uint8_t> key = {
     0x5c, 0xcb, 0x13, 0x1c, 0xab, 0xc3, 0x6c, 0x25, 0x2c, 0xd2, 0x66, 0x7c,
     0x9e, 0x15, 0xcd, 0x12, 0x48, 0xd6, 0x1b, 0x10, 0x27, 0xfd, 0x64, 0x93,
     0xa6, 0x34, 0x06, 0xcd, 0xd4, 0x5f, 0xa1, 0x87, 0x31, 0x39, 0x7b, 0xce,
-    0x26, 0xb4, 0x07, 0x8c}; // size: 256
+    0x26, 0xb4, 0x07, 0x8c};  // size: 256
 
 TEST(RainTextUtils_SplitKey, AccurateSize) {
   size_t result_size = 8;
   uint16_t result_key_size = 32;
   std::vector<std::vector<uint8_t>> result;
-  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key,result);
+  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key, result);
   ASSERT_EQ(result_size, result.size());
-  for (auto & i: result) {
+  for (auto& i : result) {
     ASSERT_EQ(result_key_size, i.size());
   }
 }
@@ -40,9 +40,9 @@ TEST(RainTextUtils_SplitKey, SmallerSize) {
   size_t result_size = 8;
   uint16_t result_key_size = 31;
   std::vector<std::vector<uint8_t>> result;
-  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key,result);
+  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key, result);
   ASSERT_EQ(result_size, result.size());
-  for (auto & i: result) {
+  for (auto& i : result) {
     ASSERT_EQ(result_key_size, i.size());
   }
 }
@@ -51,9 +51,114 @@ TEST(RainTextUtils_SplitKey, BiggerSize) {
   size_t result_size = 7;
   uint16_t result_key_size = 33;
   std::vector<std::vector<uint8_t>> result;
-  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key,result);
+  rain_text_core::rain_text_core_utils::SplitKey(result_key_size, key, result);
   ASSERT_EQ(result_size, result.size());
-  for (auto & i: result) {
+  for (auto& i : result) {
     ASSERT_EQ(result_key_size, i.size());
+  }
+}
+
+TEST(RainTextUtils_GetIV, GetIndexes) {
+  uint16_t key_size = 32;
+  std::vector<std::vector<uint8_t>> splitedKeys;
+  uint8_t result_key_index = 0;
+  uint8_t result_iv_index = 0;
+  uint8_t result_pre_salt_index = 0;
+  uint8_t iv[16];
+  rain_text_core::rain_text_core_utils::SplitKey(key_size, key, splitedKeys);
+
+  rain_text_core::rain_text_core_utils::GetIV(splitedKeys, result_key_index,
+                                              result_iv_index,
+                                              result_pre_salt_index, iv, 16);
+  ASSERT_FALSE(result_key_index == result_iv_index);
+  ASSERT_FALSE(result_key_index == result_pre_salt_index);
+  ASSERT_FALSE(result_pre_salt_index == result_iv_index);
+}
+
+TEST(RainTextUtils_GetIV, DecriptIndexes) {
+  uint16_t key_size = 32;
+  std::vector<std::vector<uint8_t>> splitedKeys;
+  uint8_t init_key_index = 0;
+  uint8_t init_iv_index = 1;
+  uint8_t init_pre_salt_index = 2;
+  uint8_t result_key_index = 0;
+  uint8_t result_iv_index = 1;
+  uint8_t result_pre_salt_index = 2;
+  uint8_t iv[16];
+  rain_text_core::rain_text_core_utils::SplitKey(key_size, key, splitedKeys);
+
+  rain_text_core::rain_text_core_utils::GetIV(
+      splitedKeys, result_key_index, result_iv_index, result_pre_salt_index, iv,
+      16, true);
+
+  ASSERT_EQ(init_key_index, result_key_index);
+  ASSERT_EQ(init_iv_index, result_iv_index);
+  ASSERT_EQ(init_pre_salt_index, result_pre_salt_index);
+}
+
+TEST(RainTextUtils_GetIV, EncryptAndDecryptIV) {
+  uint16_t key_size = 32;
+  std::vector<std::vector<uint8_t>> splitedKeys;
+  uint8_t key_index = 0;
+  uint8_t iv_index = 0;
+  uint8_t pre_salt_index = 0;
+  uint8_t encrypt_iv[16];
+  uint8_t decrypt_iv[16];
+  rain_text_core::rain_text_core_utils::SplitKey(key_size, key, splitedKeys);
+
+  rain_text_core::rain_text_core_utils::GetIV(splitedKeys, key_index, iv_index,
+                                              pre_salt_index, encrypt_iv, 16);
+
+  rain_text_core::rain_text_core_utils::GetIV(
+      splitedKeys, key_index, iv_index, pre_salt_index, decrypt_iv, 16, true);
+
+  for (int i = 0; i < 16; ++i) {
+    ASSERT_EQ(encrypt_iv[i], decrypt_iv[i]);
+  }
+}
+
+TEST(RainTextUtils_GetIV, EncryptAndDecryptIV10) {
+  for (int j = 0; j < 10; ++j) {
+    uint16_t key_size = 32;
+    std::vector<std::vector<uint8_t>> splitedKeys;
+    uint8_t key_index = 0;
+    uint8_t iv_index = 0;
+    uint8_t pre_salt_index = 0;
+    uint8_t encrypt_iv[16];
+    uint8_t decrypt_iv[16];
+    rain_text_core::rain_text_core_utils::SplitKey(key_size, key, splitedKeys);
+
+    rain_text_core::rain_text_core_utils::GetIV(
+        splitedKeys, key_index, iv_index, pre_salt_index, encrypt_iv, 16);
+
+    rain_text_core::rain_text_core_utils::GetIV(
+        splitedKeys, key_index, iv_index, pre_salt_index, decrypt_iv, 16, true);
+
+    for (int i = 0; i < 16; ++i) {
+      ASSERT_EQ(encrypt_iv[i], decrypt_iv[i]);
+    }
+  }
+}
+
+TEST(RainTextUtils_GetIV, EncryptAndDecryptIV100) {
+  for (int j = 0; j < 100; ++j) {
+    uint16_t key_size = 32;
+    std::vector<std::vector<uint8_t>> splitedKeys;
+    uint8_t key_index = 0;
+    uint8_t iv_index = 0;
+    uint8_t pre_salt_index = 0;
+    uint8_t encrypt_iv[16];
+    uint8_t decrypt_iv[16];
+    rain_text_core::rain_text_core_utils::SplitKey(key_size, key, splitedKeys);
+
+    rain_text_core::rain_text_core_utils::GetIV(
+        splitedKeys, key_index, iv_index, pre_salt_index, encrypt_iv, 16);
+
+    rain_text_core::rain_text_core_utils::GetIV(
+        splitedKeys, key_index, iv_index, pre_salt_index, decrypt_iv, 16, true);
+
+    for (int i = 0; i < 16; ++i) {
+      ASSERT_EQ(encrypt_iv[i], decrypt_iv[i]);
+    }
   }
 }

@@ -27,7 +27,7 @@ void SplitKey(uint16_t byte_size, std::vector<uint8_t> &key,
 }
 
 void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t &key_index,
-           uint8_t &init_vector_index, uint8_t &pre_salt_index, uint8_t &iv,
+           uint8_t &init_vector_index, uint8_t &pre_salt_index, uint8_t iv[],
            uint8_t iv_size, bool decrypt) {
   if (!decrypt) {
     std::uniform_int_distribution<int> dist(0, splited_keys.size() - 1);
@@ -40,11 +40,6 @@ void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t &key_index,
     while (pre_salt_index == key_index || pre_salt_index == init_vector_index) {
       pre_salt_index = dist(random);
     }
-  }
-
-  if (!key_index || !init_vector_index || !pre_salt_index) {
-    throw std::runtime_error(
-        "key_index_ or init_vector_index_ or pre_salt_index_ missing");
   }
   auto pre_init_vector = (splited_keys)[init_vector_index];
   auto pre_salt = (splited_keys)[pre_salt_index];
@@ -59,7 +54,7 @@ void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t &key_index,
 
   std::vector<unsigned char> temp =
       Argon2::Argon2id(pre_init_vector, salt, 10, 1 << 10, 4, iv_size);
-  std::move(temp.begin(), temp.end(), iv);
+  std::copy(temp.begin(), temp.end(), iv);
 }
 
 //============ rain_text_core_utils tests functions implementation =============

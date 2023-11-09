@@ -49,19 +49,20 @@ void Twofish::Encrypt(std::vector<uint8_t> &output) {
   init_vector_index_ = 0;
   pre_salt_index_ = 0;
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
-                              pre_salt_index_, init_vector_, 8);
+                              pre_salt_index_, init_vector_,
+                              CryptoPP::Twofish::BLOCKSIZE);
 
-  CryptoPP::Twofish::Encryption enc;
-  enc.SetKey((const CryptoPP::byte *)splited_keys_[key_index_].data(),
-             splited_keys_[key_index_].size());
+  std::string cipher;
+  auto text = std::string(text_.begin(), text_.end());
 
-  CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc(
-      enc, (const CryptoPP::byte *)init_vector_);
-  CryptoPP::StreamTransformationFilter stf(cbc,
-                                           new CryptoPP::VectorSink(output));
-  stf.Put(text_.data(), text_.size());
-  stf.MessageEnd();
+  CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption e;
+  e.SetKeyWithIV(splited_keys_[key_index_].data(),
+                 splited_keys_[key_index_].size(), init_vector_);
 
+  CryptoPP::StringSource ss1(text, true,
+                             new CryptoPP::StreamTransformationFilter(
+                                 e, new CryptoPP::StringSink(cipher)));
+  output = std::vector<uint8_t>(cipher.begin(), cipher.end());
   output.push_back(pre_salt_index_);
   output.push_back(init_vector_index_);
   output.push_back(key_index_);
@@ -80,18 +81,16 @@ void Twofish::Decrypt(std::vector<uint8_t> &output) {
     text_.pop_back();
   }
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
-                              pre_salt_index_, init_vector_, 8, true);
+                              pre_salt_index_, init_vector_,
+                              CryptoPP::Twofish::BLOCKSIZE, true);
 
-  CryptoPP::Twofish::Decryption dec;
-  dec.SetKey((const CryptoPP::byte *)splited_keys_[key_index_].data(),
-             splited_keys_[key_index_].size());
+  CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption d;
+  d.SetKeyWithIV(splited_keys_[key_index_].data(),
+                 splited_keys_[key_index_].size(), init_vector_);
 
-  CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc(
-      dec, (const CryptoPP::byte *)init_vector_);
-  CryptoPP::StreamTransformationFilter stf(cbc,
-                                           new CryptoPP::VectorSink(output));
-  stf.Put(text_.data(), text_.size());
-  stf.MessageEnd();
+  CryptoPP::VectorSource s(text_, true,
+                           new CryptoPP::StreamTransformationFilter(
+                               d, new CryptoPP::VectorSink(output)));
 }
 
 const std::vector<uint8_t> &Twofish::GetKey() const { return key_; }

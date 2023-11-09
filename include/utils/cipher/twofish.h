@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cryptopp/twofish.h>
 #include "utils/i_cipher.h"
 
 namespace rain_text_core {
@@ -14,6 +15,7 @@ class Twofish : public ICipher{
   uint8_t key_index_;
   uint8_t init_vector_index_;
   uint8_t pre_salt_index_;
+  uint8_t init_vector_ [CryptoPP::Twofish::BLOCKSIZE];
   std::random_device random_;
   std::vector<uint8_t> key_;
   std::vector<uint8_t> text_;

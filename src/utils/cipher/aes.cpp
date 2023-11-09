@@ -2,6 +2,8 @@
 #include "utils/cipher/aes.h"
 
 #include <Argon2.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
@@ -38,28 +40,33 @@ Aes::Aes(const uint8_t cypher_index, const std::vector<uint8_t> &key,
   if (text.empty()) {
     throw std::invalid_argument("The text vector must not be empty");
   }
-  rain_text_core_utils::SplitKey(32, key_, splited_keys_);
+  rain_text_core_utils::SplitKey(CryptoPP::AES::MAX_KEYLENGTH, key_,
+                                 splited_keys_);
   key_index_ = 0;
   init_vector_index_ = 0;
   pre_salt_index_ = 0;
 }
 
 void Aes::Encrypt(std::vector<uint8_t> &output) {
-  key_index_ = 0 init_vector_index_ = 0 pre_salt_index_ =
-      0 rain_text_core_utils::GetIV(splited_keys_, key_index_,
-                                    init_vector_index_, pre_salt_index_,
-                                    init_vector_, 16);
+  key_index_ = 0;
+  init_vector_index_ = 0;
+  pre_salt_index_ = 0;
+  rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
+                              pre_salt_index_, init_vector_,
+                              CryptoPP::AES::BLOCKSIZE);
 
-  CryptoPP::AES::Encryption aes_encryption(
-      (const CryptoPP::byte *)splited_keys_[key_index_].data(),
-      CryptoPP::AES::MAX_KEYLENGTH);  // MAX_KEYLENGTH for AES-256
-  CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc_encryption(
-      aes_encryption, (const CryptoPP::byte *)init_vector_);
+  std::string cipher;
+  auto text = std::string(text_.begin(), text_.end());
 
-  CryptoPP::StreamTransformationFilter stf_encryptor(
-      cbc_encryption, new CryptoPP::VectorSink(output));
-  stf_encryptor.Put(text_.data(), text_.size());
-  stf_encryptor.MessageEnd();
+  CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption e;
+  e.SetKeyWithIV(splited_keys_[key_index_].data(),
+                 splited_keys_[key_index_].size(), init_vector_);
+
+  CryptoPP::VectorSource s(
+      text_, true,
+      new CryptoPP::StreamTransformationFilter(
+          e, new CryptoPP::VectorSink (output))
+  );
 
   output.push_back(pre_salt_index_);
   output.push_back(init_vector_index_);
@@ -79,20 +86,20 @@ void Aes::Decrypt(std::vector<uint8_t> &output) {
     text_.pop_back();
   }
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
-                              pre_salt_index_, init_vector_, 16, true);
+                              pre_salt_index_, init_vector_,
+                              CryptoPP::AES::BLOCKSIZE, true);
 
-  CryptoPP::AES::Decryption aes_decryption(
-      (const CryptoPP::byte *)splited_keys_[key_index_].data(),
-      CryptoPP::AES::MAX_KEYLENGTH);
+  CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption d;
+  d.SetKeyWithIV(splited_keys_[key_index_].data(),
+                 splited_keys_[key_index_].size(), init_vector_);
 
-  CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc_decryption(
-      aes_decryption, (const CryptoPP::byte *)init_vector_);
+  CryptoPP::VectorSource v(
+      text_, true,
+      new CryptoPP::StreamTransformationFilter(
+          d,
+          new CryptoPP::VectorSink (output))
+  );
 
-  CryptoPP::StreamTransformationFilter stf_decryptor(
-      cbc_decryption, new CryptoPP::VectorSink(output));
-
-  stf_decryptor.Put(text_.data(), text_.size());
-  stf_decryptor.MessageEnd();
 }
 
 const std::vector<uint8_t> &Aes::GetKey() const { return key_; }

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <cryptopp/rijndael.h>
+#include <cryptopp/osrng.h>
 #include "utils/i_cipher.h"
 
 namespace rain_text_core {
@@ -13,6 +15,7 @@ class Aes : public ICipher{
   uint8_t key_index_;
   uint8_t init_vector_index_;
   uint8_t pre_salt_index_;
+  uint8_t init_vector_ [CryptoPP::AES::BLOCKSIZE];
   std::random_device random_;
   std::vector<uint8_t> key_;
   std::vector<uint8_t> text_;

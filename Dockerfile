@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     lib32z1 \
     libpthread-stubs0-dev \
     ca-certificates \
-    gpg
+    gpg \
+    valgrind
 
 RUN wget https://apt.kitware.com/kitware-archive.sh
 RUN chmod +x ./kitware-archive.sh

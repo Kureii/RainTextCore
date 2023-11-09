@@ -11,9 +11,10 @@ namespace rain_text_core {
 
 class ChaCha20 : public ICipher{
   const uint8_t cypher_index_;
-  uint8_t* key_index_;
-  uint8_t* init_vector_index_;
-  uint8_t* pre_salt_index_;
+  uint8_t key_index_;
+  uint8_t init_vector_index_;
+  uint8_t pre_salt_index_;
+  uint8_t init_vector_ [8];
   std::random_device random_;
   std::vector<uint8_t> key_;
   std::vector<uint8_t> text_;

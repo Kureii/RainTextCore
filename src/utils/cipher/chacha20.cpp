@@ -52,6 +52,7 @@ void ChaCha20::Encrypt(std::vector<uint8_t> &output) {
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
                               pre_salt_index_, init_vector_, 8);
   output = std::vector<uint8_t>(text_.size());
+
   CryptoPP::ChaCha::Encryption enc;
   enc.SetKeyWithIV((const CryptoPP::byte *)splited_keys_[key_index_].data(), 32,
                    (CryptoPP::byte *)init_vector_, CryptoPP::ChaCha::IV_LENGTH);
@@ -80,6 +81,7 @@ void ChaCha20::Decrypt(std::vector<uint8_t> &output) {
   }
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
                               pre_salt_index_, init_vector_, 8, true);
+
   output = std::vector<uint8_t>(text_.size());
 
   CryptoPP::ChaCha::Decryption dec;

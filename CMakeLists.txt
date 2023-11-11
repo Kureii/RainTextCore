@@ -1,11 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-        message("Build for Android")
-        set(CMAKE_SYSTEM_VERSION 28) # API level
-        set(CMAKE_ANDROID_STL_TYPE c++_static)
-        set(CMAKE_SYSTEM_PROCESSOR ${ANDROID_ABI})
-        add_definitions(-DANDROID)
+        message(FATAL_ERROR "Andoir is not supported")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         message("Build for Windows")
         set(CMAKE_C_COMPILER /usr/bin/x86_64-w64-mingw32-gcc)
@@ -26,7 +22,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Project name
 project(
         "RainTextCore"
-        VERSION 0.5.2
+        VERSION 0.6.0
         LANGUAGES CXX
 )
 

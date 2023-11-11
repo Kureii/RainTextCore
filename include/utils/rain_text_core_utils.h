@@ -17,6 +17,10 @@ void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t &key_index,
            uint8_t &init_vector_index, uint8_t &pre_salt_index, uint8_t iv[],
            uint8_t iv_size, bool decrypt = false);
 
+#ifdef ANDROID
+std::string vectorToString(const std::vector<uint8_t>& vec);
+#endif
+
 }  // namespace rain_text_core::rain_text_core_utils
 
 #endif  // RAINTEXTCORE_RAIN_TEXT_CORE_UTILS_H

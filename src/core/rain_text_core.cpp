@@ -1,9 +1,17 @@
 //================================= Includes ===================================
 #include "core/rain_text_core.h"
 
+#ifdef ANDROID
+#include <android/log.h>
+#include <sstream>
+#include <string>
+#define LOG_TAG "RainTextCore"
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#define LOG_TAG "RainTextCore"
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#endif
 #include <exception>
 #include <iomanip>
-#include <memory>
 #include <vector>
 
 #include "utils/cipher/aes.h"
@@ -39,30 +47,53 @@ RainTextCore::RainTextCore(uint16_t iterations, const std::vector<uint8_t>& key,
   }
 }
 void RainTextCore::Encrypt(std::vector<uint8_t>& output) {
+#ifdef ANDROID
+  LOGI("Encryption started.");
+#endif
   text_.push_back(0xFF);
+#ifdef ANDROID
+  LOGI("Vector: %s",rain_text_core_utils::vectorToString(text_).data());
+#endif
   std::uniform_int_distribution<> dist(0, NUM_CIPHERS - 1);
   std::vector<uint8_t> tmp;
   for (uint16_t i = 0; i < iterations_; ++i) {
+#ifdef ANDROID
+    LOGI("Iteration: %d", i+1);
+#endif
     tmp = std::vector<uint8_t>();
     auto random_cipher_type = static_cast<CipherType>(dist(random_));
     std::unique_ptr<rain_text_core::ICipher> selected_cipher =
         CreateCipher(random_cipher_type, text_);
     selected_cipher->Encrypt(tmp);
     text_ = tmp;
+#ifdef ANDROID
+    LOGI("Vector: %s",rain_text_core_utils::vectorToString(text_).data());
+#endif
   }
   output = tmp;
   text_ = std::move(tmp);
 }
 void RainTextCore::Decrypt(std::vector<uint8_t>& output) {
+#ifdef ANDROID
+  LOGI("Encryption started.");
+  uint16_t i = 1;
+#endif
   std::vector<uint8_t> tmp;
   while (text_.back() != 0xFF) {
     tmp = std::vector<uint8_t>();
     auto cipher_index = static_cast<CipherType>(text_.back());
+#ifdef ANDROID
+    LOGI("Iteration: %d; CipherIndex: %d", i, cipher_index);
+    i++;
+#endif
     std::unique_ptr<rain_text_core::ICipher> selected_cipher =
         CreateCipher(cipher_index, text_);
 
     selected_cipher->Decrypt(tmp);
     text_ = tmp;
+#ifdef ANDROID
+    LOGI("Vector: %s",rain_text_core_utils::vectorToString(text_).data());
+#endif
   }
   tmp.pop_back();
   text_ = tmp;
@@ -85,6 +116,8 @@ std::unique_ptr<rain_text_core::ICipher> RainTextCore::CreateCipher(
 }
 const std::vector<uint8_t>& RainTextCore::GetText() const { return text_; }
 void RainTextCore::SetText(const std::vector<uint8_t>& text) { text_ = text; }
+
+
 //============== database_utils tests functions implementation =================
 #ifdef ENABLE_TESTS
 #endif

@@ -1,16 +1,22 @@
 //================================= Includes ===================================
 #include "utils/cipher/twofish.h"
 
-#include <Argon2.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/sha3.h>
 #include <cryptopp/twofish.h>
 
 #include <iostream>
 
 #include "utils/rain_text_core_utils.h"
+
+#ifdef ANDROID
+#include <android/log.h>
+#include <sstream>
+#include <string>
+#include <iomanip>
+#define LOG_TAG "RainTextCore-Twofish"
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#endif
 
 //================================= Namespace ==================================
 namespace rain_text_core {
@@ -53,16 +59,30 @@ void Twofish::Encrypt(std::vector<uint8_t> &output) {
                               CryptoPP::Twofish::BLOCKSIZE);
 
   std::string cipher;
-  auto text = std::string(text_.begin(), text_.end());
+#ifdef ANDROID
+  LOGI("Vector in Twofish key: %s",
+       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
+  LOGI("Vector in Twofish IV: %s",
+       rain_text_core_utils::vectorToString(
+           std::vector<uint8_t>(init_vector_,
+                                init_vector_ + CryptoPP::Twofish::BLOCKSIZE))
+           .data());
+#endif
 
   CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption e;
   e.SetKeyWithIV(splited_keys_[key_index_].data(),
                  splited_keys_[key_index_].size(), init_vector_);
 
-  CryptoPP::StringSource ss1(text, true,
+  CryptoPP::VectorSource ss1(text_, true,
                              new CryptoPP::StreamTransformationFilter(
-                                 e, new CryptoPP::StringSink(cipher)));
-  output = std::vector<uint8_t>(cipher.begin(), cipher.end());
+                                 e, new CryptoPP::VectorSink (output)));
+
+#ifdef ANDROID
+  LOGI("Vector in Twofish after encrypt: %s",
+       rain_text_core_utils::vectorToString(text_).data());
+  LOGI("Vector size: %d", text_.size());
+#endif
+
   output.push_back(pre_salt_index_);
   output.push_back(init_vector_index_);
   output.push_back(key_index_);
@@ -80,9 +100,24 @@ void Twofish::Decrypt(std::vector<uint8_t> &output) {
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
+
+#ifdef ANDROID
+  LOGI("Vector in Twofish: %s",rain_text_core_utils::vectorToString(text_).data());
+  LOGI("Vector size: %d",text_.size());
+#endif
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
                               pre_salt_index_, init_vector_,
                               CryptoPP::Twofish::BLOCKSIZE, true);
+
+#ifdef ANDROID
+  LOGI("Vector in Twofish key: %s",
+       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
+  LOGI("Vector in Twofish IV: %s",
+       rain_text_core_utils::vectorToString(
+           std::vector<uint8_t>(init_vector_,
+                                init_vector_ + CryptoPP::Twofish::BLOCKSIZE))
+           .data());
+#endif
 
   CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption d;
   d.SetKeyWithIV(splited_keys_[key_index_].data(),

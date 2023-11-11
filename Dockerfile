@@ -47,3 +47,5 @@ RUN chmod +x /home/RainTextCore/compile.sh
 
 
 RUN mkdir -p build
+
+RUN /home/RainTextCore/compile.sh -j 12 -d

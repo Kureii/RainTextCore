@@ -1,14 +1,20 @@
 //================================= Includes ===================================
 #include "utils/cipher/aes.h"
 
-#include <Argon2.h>
-#include <cryptopp/cryptlib.h>
-#include <cryptopp/files.h>
+#ifdef ANDROID
+#include <android/log.h>
+
+#include <iomanip>
+#include <sstream>
+#include <string>
+#define LOG_TAG "RainTextCore-AES"
+#define LOGI(...) \
+  ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#endif
+
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
 #include <cryptopp/rijndael.h>
-#include <cryptopp/sha3.h>
 
 #include <iostream>
 
@@ -56,17 +62,29 @@ void Aes::Encrypt(std::vector<uint8_t> &output) {
                               CryptoPP::AES::BLOCKSIZE);
 
   std::string cipher;
-  auto text = std::string(text_.begin(), text_.end());
+
+#ifdef ANDROID
+  LOGI("Vector in AES key: %s",
+       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
+  LOGI("Vector in AES IV: %s",
+       rain_text_core_utils::vectorToString(
+           std::vector<uint8_t>(init_vector_,
+                                init_vector_ + CryptoPP::AES::BLOCKSIZE))
+           .data());
+#endif
 
   CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption e;
   e.SetKeyWithIV(splited_keys_[key_index_].data(),
                  splited_keys_[key_index_].size(), init_vector_);
 
-  CryptoPP::VectorSource s(
-      text_, true,
-      new CryptoPP::StreamTransformationFilter(
-          e, new CryptoPP::VectorSink (output))
-  );
+  CryptoPP::VectorSource s(text_, true,
+                           new CryptoPP::StreamTransformationFilter(
+                               e, new CryptoPP::VectorSink(output)));
+#ifdef ANDROID
+  LOGI("Vector in AES after encrypt: %s",
+       rain_text_core_utils::vectorToString(text_).data());
+  LOGI("Vector size: %d", text_.size());
+#endif
 
   output.push_back(pre_salt_index_);
   output.push_back(init_vector_index_);
@@ -85,21 +103,32 @@ void Aes::Decrypt(std::vector<uint8_t> &output) {
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
+#ifdef ANDROID
+  LOGI("Vector in AES before decrypt: %s",
+       rain_text_core_utils::vectorToString(text_).data());
+  LOGI("Vector size: %d", text_.size());
+#endif
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
                               pre_salt_index_, init_vector_,
                               CryptoPP::AES::BLOCKSIZE, true);
+
+#ifdef ANDROID
+  LOGI("Vector in AES key: %s",
+       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
+  LOGI("Vector in AES IV: %s",
+       rain_text_core_utils::vectorToString(
+           std::vector<uint8_t>(init_vector_,
+                                init_vector_ + CryptoPP::AES::BLOCKSIZE))
+           .data());
+#endif
 
   CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption d;
   d.SetKeyWithIV(splited_keys_[key_index_].data(),
                  splited_keys_[key_index_].size(), init_vector_);
 
-  CryptoPP::VectorSource v(
-      text_, true,
-      new CryptoPP::StreamTransformationFilter(
-          d,
-          new CryptoPP::VectorSink (output))
-  );
-
+  CryptoPP::VectorSource v(text_, true,
+                           new CryptoPP::StreamTransformationFilter(
+                               d, new CryptoPP::VectorSink(output)));
 }
 
 const std::vector<uint8_t> &Aes::GetKey() const { return key_; }

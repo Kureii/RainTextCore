@@ -5,13 +5,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Android")
         set(CMAKE_SYSTEM_VERSION 28) # API level
         set(CMAKE_ANDROID_STL_TYPE c++_static)
         set(CMAKE_SYSTEM_PROCESSOR ${ANDROID_ABI})
+        add_definitions(-DANDROID)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         message("Build for Windows")
         set(CMAKE_C_COMPILER /usr/bin/x86_64-w64-mingw32-gcc)
         set(CMAKE_CXX_COMPILER /usr/bin/x86_64-w64-mingw32-g++)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         message("Build for Linux")
-        set(CMAKE_SYSTEM_PROCESSOR "x86_64")
 endif()
 
 add_compile_definitions(NDEBUG)
@@ -26,32 +26,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Project name
 project(
         "RainTextCore"
-        VERSION 0.5.1
+        VERSION 0.5.2
         LANGUAGES CXX
 )
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-        if(ANDROID_ABI STREQUAL "armeabi-v7a")
-                set(CMAKE_SYSTEM_PROCESSOR "armeabi-v7a")
-        elseif(ANDROID_ABI STREQUAL "arm64-v8a")
-                set(CMAKE_SYSTEM_PROCESSOR "arm64-v8a")
-        elseif(ANDROID_ABI STREQUAL "x86")
-                set(CMAKE_SYSTEM_PROCESSOR "x86")
-        elseif(ANDROID_ABI STREQUAL "x86_64")
-                set(CMAKE_SYSTEM_PROCESSOR "x86_64")
-        endif()
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        set(CMAKE_SYSTEM_PROCESSOR "x86_64")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-                set(CMAKE_SYSTEM_PROCESSOR "x86_64")
-        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-                set(CMAKE_SYSTEM_PROCESSOR "aarch64")
-        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
-                set(CMAKE_SYSTEM_PROCESSOR "arm")
-        endif()
-endif()
-message("CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 
 include(include/include.cmake)
 include(src/src.cmake)

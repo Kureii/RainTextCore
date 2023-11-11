@@ -1,15 +1,6 @@
 //================================= Includes ===================================
 #include "utils/rain_text_core_utils.h"
 
-#ifdef ANDROID
-#include <android/log.h>
-#include <sstream>
-#include <string>
-#include <iomanip>
-#define LOG_TAG "RainTextCore"
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
-#endif
-
 #include <Argon2.h>
 #include <cryptopp/sha3.h>
 
@@ -18,13 +9,6 @@
 //================================= Namespace ==================================
 namespace rain_text_core::rain_text_core_utils {
 //======================== Define helpful variables ============================
-#ifdef ANDROID
-#define ARGON_TIME 5
-#define ARGON_CORES 8
-#else
-#define ARGON_TIME 10
-#define ARGON_CORES 4
-#endif
 std::random_device random;
 //======================= Define helpful structures ============================
 
@@ -69,26 +53,10 @@ void GetIV(std::vector<std::vector<uint8_t>> &splited_keys, uint8_t &key_index,
   auto salt = std::vector<uint8_t>(salt_text.begin(), salt_text.end());
 
   std::vector<unsigned char> temp =
-      Argon2::Argon2id(pre_init_vector, salt, ARGON_TIME, 1 << 10, ARGON_CORES, iv_size);
+      Argon2::Argon2id(pre_init_vector, salt, 10, 1 << 10, 4, iv_size);
   std::copy(temp.begin(), temp.end(), iv);
 }
-#ifdef ANDROID
-std::string vectorToString(const std::vector<uint8_t>& vec) {
-  if (vec.empty()) {
-    return "";
-  }
 
-  std::ostringstream oss;
-  oss << std::hex << std::setfill('0') << std::uppercase;
-  for (size_t i = 0; i < vec.size() - 1; ++i) {
-    oss << "0x" << std::setw(2) << static_cast<unsigned>(vec[i]) << ", ";
-  }
-
-  oss << "0x" << std::setw(2) << static_cast<unsigned>(vec.back());
-
-  return oss.str();
-}
-#endif
 //============ rain_text_core_utils tests functions implementation =============
 #ifdef ENABLE_TESTS
 

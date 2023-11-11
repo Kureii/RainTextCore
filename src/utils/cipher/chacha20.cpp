@@ -1,13 +1,5 @@
 //================================= Includes ===================================
 #include "utils/cipher/chacha20.h"
-#ifdef ANDROID
-#include <android/log.h>
-#include <sstream>
-#include <string>
-#include <iomanip>
-#define LOG_TAG "RainTextCore-ChaCha20"
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
-#endif
 
 #include <cryptopp/chacha.h>
 #include <cryptopp/hex.h>
@@ -55,16 +47,6 @@ void ChaCha20::Encrypt(std::vector<uint8_t> &output) {
                               pre_salt_index_, init_vector_, 8);
   output = std::vector<uint8_t>(text_.size());
 
-#ifdef ANDROID
-  LOGI("Vector in ChaCha key: %s",
-       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
-  LOGI("Vector in ChaCha20 IV: %s",
-       rain_text_core_utils::vectorToString(
-           std::vector<uint8_t>(init_vector_,
-                                init_vector_ + 8))
-           .data());
-#endif
-
   CryptoPP::ChaCha::Encryption enc;
   enc.SetKeyWithIV((const CryptoPP::byte *)splited_keys_[key_index_].data(), 32,
                    (CryptoPP::byte *)init_vector_, CryptoPP::ChaCha::IV_LENGTH);
@@ -73,12 +55,6 @@ void ChaCha20::Encrypt(std::vector<uint8_t> &output) {
       enc, new CryptoPP::ArraySink(&output[0], output.size()));
   stf.Put(text_.data(), text_.size());
   stf.MessageEnd();
-
-#ifdef ANDROID
-  LOGI("Vector in ChaCha20 after encrypt: %s",
-       rain_text_core_utils::vectorToString(text_).data());
-  LOGI("Vector size: %d", text_.size());
-#endif
 
   output.push_back(pre_salt_index_);
   output.push_back(init_vector_index_);
@@ -97,23 +73,9 @@ void ChaCha20::Decrypt(std::vector<uint8_t> &output) {
   for (int i = 0; i < 4; ++i) {
     text_.pop_back();
   }
-#ifdef ANDROID
-  LOGI("Vector in ChaCha20: %s",rain_text_core_utils::vectorToString(text_).data());
-  LOGI("Vector size: %d",text_.size());
-#endif
 
   rain_text_core_utils::GetIV(splited_keys_, key_index_, init_vector_index_,
                               pre_salt_index_, init_vector_, 8, true);
-
-#ifdef ANDROID
-  LOGI("Vector in ChaCha key: %s",
-       rain_text_core_utils::vectorToString(splited_keys_[key_index_]).data());
-  LOGI("Vector in ChaCha20 IV: %s",
-       rain_text_core_utils::vectorToString(
-           std::vector<uint8_t>(init_vector_,
-                                init_vector_ + 8))
-           .data());
-#endif
 
   output = std::vector<uint8_t>(text_.size());
 

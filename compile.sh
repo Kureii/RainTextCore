@@ -1,15 +1,13 @@
 #!/bin/bash
 
 COMPILE_ALL=false
-COMPILE_ANDROID=false
 COMPILE_LINUX=false
 COMPILE_WINDOWS=false
-ANDROID_ARCHS=()
 LINUX_ARCHS=()
 WINDOWS_ARCHS=()
 JOBS=1
 PROJECT_PATH="$(realpath "$(dirname "$0")")"
-declare -A ARCH_MAP=( [v7]="armeabi-v7a" [v8]="arm64-v8a" [x86]="x86" [x86_64]="x86_64" [am64]="arm64" )
+declare -A ARCH_MAP=( [v8]="arm64-v8a" [x86]="x86" [x86_64]="x86_64" [am64]="arm64" )
 
 
 usage() {
@@ -18,15 +16,7 @@ Usage: $0 [OPTION]... [PATH]
 Compile RainTextCore project for various platforms and CPU architectures.
 
 OPTIONS:
-  -a, --all         Compile for all supported platforms (Android, Linux, Windows) and CPUs.
-  -d, --android     Compile for Android. If no architecture is specified,
-                    targets all Android architectures.
-                    Supported architectures for Android:
-                      all        Target all architectures (default)
-                      v7         Architecture armeabi-v7a
-                      v8         Architecture arm64-v8a
-                      x86        Architecture x86
-                      x86_64     Architecture x86_64
+  -a, --all         Compile for all supported platforms (Linux, Windows) and CPUs.
   -l, --linux       Compile for Linux. Defaults to x86_64 if no architecture is specified.
                     Supported architectures for Linux:
                       all        Target all architectures
@@ -47,15 +37,14 @@ OPTIONS:
 
 
 Defaults:
-  Android: all architectures
   Linux: x86_64
   Windows: x86_64
 
 Examples:
   $0                            # Compile for default architectures of all platforms.
   $0 --all                      # Compile for all platforms and architectures.
-  $0 -d                         # Compile for all Android architectures.
-  $0 -d v8                      # Compile for Android arm64-v8a.
+  $0 -l                         # Compile for all Linux architectures.
+  $0 -l v8                      # Compile for Linux arm64-v8a.
 
 EOF
 }
@@ -81,28 +70,6 @@ while [[ $# -gt 0 ]]; do
     -a|--all)
       COMPILE_ALL=true
       shift
-      ;;
-    -d|--android)
-      COMPILE_ANDROID=true
-      shift
-      if [[ "$1" =~ ^(all|v7|v8|x86|x86_64)$ ]]; then
-        while [[ "$1" =~ ^(all|v7|v8|x86|x86_64)$ ]]; do
-          if [ "$1" == "all" ]; then
-            add_arch android "${ARCH_MAP[v7]}"
-            add_arch android "${ARCH_MAP[v8]}"
-            add_arch android "${ARCH_MAP[x86]}"
-            add_arch android "${ARCH_MAP[x86_64]}"
-          else
-            add_arch android "${ARCH_MAP[$1]}"
-          fi
-          shift
-        done
-      else
-        add_arch android "${ARCH_MAP[v7]}"
-        add_arch android "${ARCH_MAP[v8]}"
-        add_arch android "${ARCH_MAP[x86]}"
-        add_arch android "${ARCH_MAP[x86_64]}"
-      fi
       ;;
     -l|--linux)
       COMPILE_LINUX=true
@@ -168,13 +135,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$COMPILE_ALL" = true ]]; then
-  COMPILE_ANDROID=true
   COMPILE_LINUX=true
   COMPILE_WINDOWS=true
-  add_arch android "${ARCH_MAP[v7]}"
-  add_arch android "${ARCH_MAP[v8]}"
-  add_arch android "${ARCH_MAP[x86]}"
-  add_arch android "${ARCH_MAP[x86_64]}"
 
   add_arch linux "${ARCH_MAP[x86]}"
   add_arch linux "${ARCH_MAP[x86_64]}"
@@ -184,30 +146,6 @@ if [[ "$COMPILE_ALL" = true ]]; then
   add_arch windows "${ARCH_MAP[x86]}"
   add_arch windows "${ARCH_MAP[x86_64]}"
   add_arch windows "${ARCH_MAP[am64]}"
-fi
-
-# Android
-if [[ "$COMPILE_ANDROID" = true ]]; then
-  cd "$PROJECT_PATH" || exit 1
-  mkdir -p "$PROJECT_PATH"/release || exit 1
-  mkdir -p "$PROJECT_PATH"/release/android || exit 1
-  export MINSDKVERSION=26
-  export NDK=/home/NDK/android-ndk-r26
-  export SYSROOT=/home/NDK/android-ndk-r26/platforms/android-21/arch-arm
-  export CC=/home/NDK/android-ndk-r26/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-  export CXX=/home/NDK/android-ndk-r26/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
-  for abi in "${ANDROID_ARCHS[@]}"; do
-    echo "Architecture: $abi"
-    mkdir -p "$PROJECT_PATH"/release/android/"$abi" || exit 1
-    cd "$PROJECT_PATH"/release/android/"$abi" || exit 1
-    cmake \
-      -DCMAKE_SYSTEM_NAME=Android \
-      -DCMAKE_TOOLCHAIN_FILE=/home/NDK/android-ndk-r26/build/cmake/android.toolchain.cmake \
-      -DANDROID_ABI="$abi" \
-      -DANDROID_ARM_NEON=ON \
-      -DANDROID_PLATFORM=android-$MINSDKVERSION "$PROJECT_PATH"
-    make -j "$JOBS"
-  done
 fi
 
 # Linux
